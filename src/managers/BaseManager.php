@@ -24,6 +24,11 @@ abstract class BaseManager implements ActiveRecordHistoryInterface
     public $saveUserId = true;
 
     /**
+     * @var boolean Flag for save the value of all the fields when new record is insert
+     */
+    public $saveAllFieldsOnInsert = false;
+
+    /**
      * @inheritdoc
      */
     public function setOptions($options)
@@ -65,9 +70,12 @@ abstract class BaseManager implements ActiveRecordHistoryInterface
 
         switch ($type) {
             case self::AR_INSERT:
-                $data['field_name'] = $pk;
-                $this->saveField($data);
-                break;
+                if (!$this->saveAllFieldsOnInsert) {
+                    break;
+                } else {
+                    $data['field_name'] = $pk;
+                    $this->saveField($data);
+                }
             case self::AR_UPDATE:
                 foreach ($this->updatedFields as $updatedFieldKey => $updatedFieldValue) {
                     $data['field_name'] = $updatedFieldKey;
