@@ -5,6 +5,8 @@ use nhkey\arh\managers\ActiveRecordHistoryInterface;
 
 $module = Yii::$app->getModule('arh');
 $userClass = $module->userClass;
+$instance = $modelClass::instantiate([]);
+$fieldsConfig = $instance->getBehavior('history')->historyDisplayConfig;
 $columns = [
     'date' => [
         'attribute' => 'date',
@@ -20,8 +22,7 @@ $columns = [
     ],
     'field_name' => [
         'attribute' => 'field_name',
-        'value' => function ($model) use ($modelClass) {
-            $instance = $modelClass::instantiate([]);
+        'value' => function ($model) use ($instance) {
             return $instance->getAttributeLabel($model['field_name']);
         },
         'label' => Yii::t('arh', 'Field Name'),
