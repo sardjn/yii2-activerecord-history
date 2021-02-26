@@ -42,14 +42,17 @@ class ActiveRecordHistoryController extends Controller
     {
         $modelClass = Yii::$app->request->post('modelClass');
         $primaryKey = Yii::$app->request->post('primaryKey');
-        $model = $this->findModel($modelClass, $primaryKey);
+        $models = $this->findModels($modelClass, $primaryKey);
+        $changes = [];
+        foreach ($models as $model) {
+            $changes += $model->changes();
+        }
         $dataProvider = new ArrayDataProvider([
-            'models' => $model->changes(),
+            'models' => $changes,
         ]);
         return $this->renderAjax('model-changes', [
             'dataProvider' => $dataProvider,
             'modelClass' => $modelClass,
-            'fieldsConfig' => $model->getBehavior('history')->historyDisplayConfig,
         ]);
     }
 
@@ -59,12 +62,8 @@ class ActiveRecordHistoryController extends Controller
      * @return ActiveRecord
      * @throws NotFoundHttpException
      */
-    protected function findModel($class, $field_id)
+    protected function findModels($class, $field_id)
     {
-        $model = $class::findOne($field_id);
-        if (empty($model)) {
-            throw new NotFoundHttpException();
-        }
-        return $model;
+        return $class::findAll($field_id);
     }
 }
