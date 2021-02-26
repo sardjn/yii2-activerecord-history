@@ -36,6 +36,14 @@ class ActiveRecordHistoryBehavior extends Behavior
     public $managerOptions;
 
     /**
+     * Other configurations to display the fields values in the changes history, possible keys are:
+     * - format
+     * - value, expects a Closure with only parameter the value
+     * @var array
+     */
+    public $historyDisplayConfig = [];
+
+    /**
      * @var array Get Yii2 event name from behavior event name
      * @return array|string
      */

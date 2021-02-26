@@ -12,6 +12,7 @@ use yii\web\NotFoundHttpException;
 class ActiveRecordHistoryController extends Controller
 {
     public $module;
+    public $enableCsrfValidation = false;
 
     /**
      * @inheritdoc
@@ -37,14 +38,18 @@ class ActiveRecordHistoryController extends Controller
         parent::init();
     }
 
-    public function actionModelChanges($class, $field_id)
+    public function actionModelChanges()
     {
-        $model = $this->findModel($class, $field_id);
+        $modelClass = Yii::$app->request->post('modelClass');
+        $primaryKey = Yii::$app->request->post('primaryKey');
+        $model = $this->findModel($modelClass, $primaryKey);
         $dataProvider = new ArrayDataProvider([
             'models' => $model->changes(),
         ]);
         return $this->renderAjax('model-changes', [
             'dataProvider' => $dataProvider,
+            'modelClass' => $modelClass,
+            'fieldsConfig' => $model->getBehavior('history')->historyDisplayConfig,
         ]);
     }
 
@@ -54,7 +59,7 @@ class ActiveRecordHistoryController extends Controller
      * @return ActiveRecord
      * @throws NotFoundHttpException
      */
-    private function findModel($class, $field_id)
+    protected function findModel($class, $field_id)
     {
         $model = $class::findOne($field_id);
         if (empty($model)) {
@@ -62,5 +67,4 @@ class ActiveRecordHistoryController extends Controller
         }
         return $model;
     }
-
 }
