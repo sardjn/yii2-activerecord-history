@@ -70,11 +70,12 @@ abstract class BaseManager implements ActiveRecordHistoryInterface
 
         switch ($type) {
             case self::AR_INSERT:
-                if (!$this->saveAllFieldsOnInsert) {
-                    break;
+                if ($this->saveAllFieldsOnInsert) {
+
                 } else {
                     $data['field_name'] = $pk;
                     $this->saveField($data);
+                    break;
                 }
             case self::AR_UPDATE:
                 foreach ($this->updatedFields as $updatedFieldKey => $updatedFieldValue) {
