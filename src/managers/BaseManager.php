@@ -135,6 +135,25 @@ abstract class BaseManager implements ActiveRecordHistoryInterface
     }
 
     /**
+     *
+     * @param $model
+     * @param $fieldsConfig format configuration according to 
+     * @param false $old_value
+     * @return false|mixed|string
+     */
+    static function applyFormat($model, $fieldsConfig, $old_value = false) {
+        $field_name = $model['field_name'];
+        $value = $old_value ? $model['old_value'] : $model['new_value'];
+        if(isset($fieldsConfig[$field_name]['value'])) {
+            $value = call_user_func($fieldsConfig[$field_name]['value'], $value);
+        }
+        if(isset($fieldsConfig[$field_name]['format'])) {
+            return Yii::$app->formatter->format($value, $fieldsConfig[$field_name]['format']);
+        }
+        return $value;
+    }
+
+    /**
      * By default is not able to obtain the data record, the implementation is demanded to each specialization
      * of the manager
      * @param array $filter

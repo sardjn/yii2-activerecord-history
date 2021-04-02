@@ -1,5 +1,6 @@
 <?php
 
+use nhkey\arh\managers\BaseManager;
 use yii\grid\GridView;
 use nhkey\arh\managers\ActiveRecordHistoryInterface;
 
@@ -30,15 +31,7 @@ $columns = [
     'old_value' => [
         'attribute' => 'old_value',
         'value' => function ($model) use ($fieldsConfig) {
-            $field_name = $model['field_name'];
-            $value = $model['old_value'];
-            if(isset($fieldsConfig[$field_name]['value'])) {
-                $value = call_user_func($fieldsConfig[$field_name]['value'], $value);
-            }
-            if(isset($fieldsConfig[$field_name]['format'])) {
-                return Yii::$app->formatter->format($value, $fieldsConfig[$field_name]['format']);
-            }
-            return $value;
+            return BaseManager::applyFormat($model, $fieldsConfig, true);
         },
         'format' => 'html',
         'label' => Yii::t('arh', 'Old Value'),
@@ -46,15 +39,7 @@ $columns = [
     'new_value' => [
         'attribute' => 'new_value',
         'value' => function ($model) use ($fieldsConfig) {
-            $field_name = $model['field_name'];
-            $value = $model['new_value'];
-            if(isset($fieldsConfig[$field_name]['value'])) {
-                $value = call_user_func($fieldsConfig[$field_name]['value'], $value);
-            }
-            if(isset($fieldsConfig[$field_name]['format'])) {
-                return Yii::$app->formatter->format($value, $fieldsConfig[$field_name]['format']);
-            }
-            return $value;
+            return BaseManager::applyFormat($model, $fieldsConfig);
         },
         'format' => 'html',
         'label' => Yii::t('arh', 'New Value'),

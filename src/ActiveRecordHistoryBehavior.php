@@ -7,6 +7,7 @@
 namespace nhkey\arh;
 
 use nhkey\arh\managers\BaseManager;
+use Yii;
 use yii\db\BaseActiveRecord;
 use \yii\base\Behavior;
 
@@ -38,7 +39,20 @@ class ActiveRecordHistoryBehavior extends Behavior
     /**
      * Other configurations to display the fields values in the changes history, possible keys are:
      * - format
-     * - value, expects a Closure with only parameter the value
+     * - value, expects a Closure which has only one parameter populated with old
+     * Example:
+     *
+     * 'historyDisplayConfig' => [
+     *      'idsupplier' => [
+     *          'value' => function($value) {
+     *              return User::findOne($value)->username;
+     *          },
+     *      ],
+     *      'data_deliverynote' => [
+     *          'format' => 'date',
+     *      ],
+     *  ],
+     *
      * @var array
      */
     public $historyDisplayConfig = [];
@@ -118,26 +132,41 @@ class ActiveRecordHistoryBehavior extends Behavior
     /**
      * Get the record corresponding to last change of an attribute
      * @param $attribute
+     * @param bool $format if true tries to format old_value and new_value according to format specified
+     * in 'historyDisplayConfig' parameter
      * @return mixed
      */
-    public function lastChanged($attribute)
+    public function lastChanged($attribute, $format = false)
     {
         $manager = new $this->manager;
         $manager->setOptions($this->managerOptions);
 
-        return $manager->getData($attribute, $this->owner);
+        $field = $manager->getData($attribute, $this->owner);
+        if ($format) {
+            $field['old_value'] = BaseManager::applyFormat($field, $this->historyDisplayConfig, true);
+            $field['new_value'] = BaseManager::applyFormat($field, $this->historyDisplayConfig);
+        }
+        return $field;
     }
 
     /**
      * Get the records corresponding to all changes
-     * @param $attribute
+     * @param bool $format if true tries to format old_value and new_value according to format specified
+     * in 'historyDisplayConfig' parameter
      * @return mixed
      */
-    public function changes()
+    public function changes($format = false)
     {
         $manager = new $this->manager;
         $manager->setOptions($this->managerOptions);
 
-        return $manager->getAllData($this->owner);
+        $fields = $manager->getAllData($this->owner);
+        if ($format) {
+            foreach ($fields AS $k => $field) {
+                $fields[$k]['old_value'] = BaseManager::applyFormat($field, $this->historyDisplayConfig, true);
+                $fields[$k]['new_value'] = BaseManager::applyFormat($field, $this->historyDisplayConfig);
+            }
+        }
+        return $fields;
     }
 }
