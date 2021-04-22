@@ -169,4 +169,43 @@ class ActiveRecordHistoryBehavior extends Behavior
         }
         return $fields;
     }
+    
+    /**
+    * Returns the dates in which an attribute is changed, if from_to is set it
+    * reports only the related dates in which the attribute is hanged from
+    * a specified value to another
+    * for example $model->changesDatesAttribute('active", ["1","0"] reports a
+    * string with the dates in which the model->active is passed from "1" to "0"
+    * @param string $attribute
+    * @param array $from_to if set must contain 2 values [old_value, new_value]
+    * @param string $sep default <br />
+    * @param string $format default "date" (but also datetime can be used)
+    * @return string
+    */
+   public function changesDatesAttribute($attribute, $from_to=[], $sep="<br />", $format="date" )
+   {
+       $manager = new $this->manager;
+       $manager->setOptions($this->managerOptions);
+       $fields = $manager->getAllData($this->owner);
+       $dates = [];
+       foreach ($fields AS $k => $field) {
+           if ($field['field_name']===$attribute){
+               $data = Yii::$app->formatter->asDate($field['date']);
+               if ($format=="datetime"){
+                   $data = Yii::$app->formatter->asDatetime($field['date']);
+               }
+               $add = [$data];
+               // if from_to is specified the different changes are ignored
+               if (count($from_to)==2 && ($field['old_value']!=$from_to[0] ||  $field['new_value']!=$from_to[1])){
+                   $add = [];
+               }
+              $dates = array_merge($dates, $add);
+           }
+       }
+       return implode($sep, $dates);
+   }
+    
+    
+    
+    
 }
