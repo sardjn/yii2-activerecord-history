@@ -8,6 +8,7 @@ namespace nhkey\arh\managers;
 
 use Yii;
 use yii\base\ErrorException;
+use yii\helpers\Json;
 
 
 abstract class BaseManager implements ActiveRecordHistoryInterface
@@ -80,8 +81,8 @@ abstract class BaseManager implements ActiveRecordHistoryInterface
             case self::AR_UPDATE:
                 foreach ($this->updatedFields as $updatedFieldKey => $updatedFieldValue) {
                     $data['field_name'] = $updatedFieldKey;
-                    $data['old_value'] = $updatedFieldValue;
-                    $data['new_value'] = $object->$updatedFieldKey;
+                    $data['old_value'] = $this->encodeValue($updatedFieldValue);
+                    $data['new_value'] = $this->encodeValue($object->$updatedFieldKey);
                     if($data['old_value'] != $data['new_value']){
                         $this->saveField($data);
                     }
@@ -177,6 +178,19 @@ abstract class BaseManager implements ActiveRecordHistoryInterface
     protected function getFields(array $filter, array $order)
     {
         throw new ErrorException("Method not implemented");
+    }
+
+    /**
+     * Encode the value to be written in database
+     * @param $value
+     * @return string
+     */
+    protected function encodeValue($value)
+    {
+        if(!is_array($value)) {
+            return $value;
+        }
+        return Json::encode($value);
     }
 
 }
