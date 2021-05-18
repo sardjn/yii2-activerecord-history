@@ -45,8 +45,11 @@ class ActiveRecordHistoryController extends Controller
         $models = $this->findModels($modelClass, $primaryKey);
         $changes = [];
         foreach ($models as $model) {
-            $changes += $model->changes();
+            $changes = array_merge($changes, $model->changes());
         }
+        usort($changes, function ($a, $b) {
+            return $a['date'] < $b['date'];
+        });
         $dataProvider = new ArrayDataProvider([
             'models' => $changes,
         ]);
