@@ -8,6 +8,7 @@ namespace nhkey\arh\managers;
 
 use Yii;
 use yii\base\ErrorException;
+use yii\db\Expression;
 use yii\helpers\Json;
 
 
@@ -112,7 +113,7 @@ abstract class BaseManager implements ActiveRecordHistoryInterface
     {
         $filter = [
             'table' => $object->tableName(),
-            'field_id' => $object->getPrimaryKey(),
+            'field_id' => new Expression("'{$object->getPrimaryKey()}'"),
             'field_name' => $attribute,
         ];
         $order = ['date' => SORT_DESC];
@@ -129,7 +130,7 @@ abstract class BaseManager implements ActiveRecordHistoryInterface
     {
         $filter = [
             'table' => $object->tableName(),
-            'field_id' => $object->getPrimaryKey(),
+            'field_id' => new Expression("'{$object->getPrimaryKey()}'"),
         ];
         $order = ['date' => SORT_DESC, 'type' => SORT_DESC];
         return $this->getFields($filter, $order);
