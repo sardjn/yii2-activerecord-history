@@ -37,7 +37,7 @@ class ModelChangesButton extends \yii\base\Widget
             throw new InvalidConfigException("The modelClass property is mandatory");
         }
         if(empty($this->primaryKey)) {
-            throw new InvalidConfigException("The primaryKey property is mandatory");
+            $this->primaryKey = -1;
         }
         if(is_null($this->modalHeader)) {
             $this->modalHeader = Yii::t('arh', 'Changes history');
