@@ -9,6 +9,12 @@ $userClass = $module->userClass;
 $instance = $modelClass::instantiate([]);
 $fieldsConfig = $instance->getBehavior('history')->historyDisplayConfig;
 $columns = [
+
+    'id' => [
+        'attribute' => 'id',
+        'label' => Yii::t('arh', 'Id'),
+        'visible' => YII_DEBUG,
+    ],
     'date' => [
         'attribute' => 'date',
         'format' => 'datetime',

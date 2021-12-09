@@ -116,7 +116,7 @@ abstract class BaseManager implements ActiveRecordHistoryInterface
             'field_id' => new Expression("'{$object->getPrimaryKey()}'"),
             'field_name' => $attribute,
         ];
-        $order = ['date' => SORT_DESC];
+        $order = ['id' => SORT_DESC];
         return $this->getField($filter, $order);
     }
 
@@ -132,7 +132,7 @@ abstract class BaseManager implements ActiveRecordHistoryInterface
             'table' => $object->tableName(),
             'field_id' => new Expression("'{$object->getPrimaryKey()}'"),
         ];
-        $order = ['date' => SORT_DESC, 'type' => SORT_DESC];
+        $order = ['id' => SORT_DESC, 'type' => SORT_DESC];
         return $this->getFields($filter, $order);
     }
 
