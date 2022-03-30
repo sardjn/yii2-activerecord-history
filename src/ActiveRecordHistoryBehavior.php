@@ -10,6 +10,7 @@ use nhkey\arh\managers\BaseManager;
 use Yii;
 use yii\db\BaseActiveRecord;
 use \yii\base\Behavior;
+use yii\helpers\ArrayHelper;
 
 
 class ActiveRecordHistoryBehavior extends Behavior
@@ -22,7 +23,7 @@ class ActiveRecordHistoryBehavior extends Behavior
     public $manager ='nhkey\arh\managers\DBManager';
 
     /**
-     * @var array This fields don't save in your storage
+     * @var array This fields not to be saved in the history.
      */
     public $ignoreFields = [];
 
@@ -56,6 +57,20 @@ class ActiveRecordHistoryBehavior extends Behavior
      * @var array
      */
     public $historyDisplayConfig = [];
+
+    /**
+     * @var string The key in which informations are stored in session.
+     */
+    public $sessionKey = 'ar_history_session';
+
+    /**
+     * If the ids of the record inserted and updated will be stored in session.
+     * It is used in hasBeenModified get method.
+     * The ids will be stored in the key set in $sessionKey of this behavior under their formName().
+     * @see getHasBeenModified()
+     * @var bool
+     */
+    public $saveUpdatesInSession = false;
 
     /**
      * @var array Get Yii2 event name from behavior event name
@@ -100,6 +115,9 @@ class ActiveRecordHistoryBehavior extends Behavior
                         unset($changedAttributes[$ignoreField]);
                 }
                 $manager->setUpdatedFields($changedAttributes);
+                if($this->saveUpdatesInSession) {
+                    $this->storeInSession();
+                }
                 break;
 
             case BaseActiveRecord::EVENT_AFTER_UPDATE:
@@ -117,6 +135,9 @@ class ActiveRecordHistoryBehavior extends Behavior
                         unset($changedAttributes[$ignoreField]);
 
                 $manager->setUpdatedFields($changedAttributes);
+                if($this->saveUpdatesInSession) {
+                    $this->storeInSession();
+                }
                 break;
 
             case BaseActiveRecord::EVENT_AFTER_DELETE:
@@ -204,8 +225,45 @@ class ActiveRecordHistoryBehavior extends Behavior
        }
        return implode($sep, $dates);
    }
-    
-    
-    
-    
+
+    /**
+     * @return array|null the infos stored in session.
+     */
+   protected function getSession()
+   {
+       return Yii::$app->session->get($this->sessionKey);
+   }
+
+    /**
+     * @return array The infos stored in session for the model class of the owner.
+     * @throws \Exception
+     */
+   protected function getModelSession()
+   {
+       return ArrayHelper::getValue($this->getSession(), $this->owner->formName(), []);
+   }
+
+    /**
+     * Stores the id of the model in session.
+     * @return void
+     */
+   protected function storeInSession()
+   {
+       $modelSession = $this->getSession();
+       $modelSession[$this->owner->formName()][] = $this->owner->getPrimaryKey();
+       Yii::$app->session->set($this->sessionKey, $modelSession);
+   }
+
+    /**
+     * @return bool|null If the model has been inserted or modified in the current session. If saving in session is
+     * disabled it will return `null`.
+     * @throws \Exception
+     */
+   public function getHasBeenModified()
+   {
+       if(!$this->saveUpdatesInSession) {
+           return null;
+       }
+       return in_array($this->owner->getPrimaryKey(), $this->getModelSession());
+   }
 }
