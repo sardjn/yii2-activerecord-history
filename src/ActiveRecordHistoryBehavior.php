@@ -116,7 +116,7 @@ class ActiveRecordHistoryBehavior extends Behavior
                 }
                 $manager->setUpdatedFields($changedAttributes);
                 if($this->saveUpdatesInSession) {
-                    $this->storeInSession();
+                    $this->storeInSession($type);
                 }
                 break;
 
@@ -135,8 +135,8 @@ class ActiveRecordHistoryBehavior extends Behavior
                         unset($changedAttributes[$ignoreField]);
 
                 $manager->setUpdatedFields($changedAttributes);
-                if($this->saveUpdatesInSession) {
-                    $this->storeInSession();
+                if(!empty($changedAttributes) && $this->saveUpdatesInSession) {
+                    $this->storeInSession($type);
                 }
                 break;
 
@@ -244,13 +244,14 @@ class ActiveRecordHistoryBehavior extends Behavior
    }
 
     /**
-     * Stores the id of the model in session.
+     * Stores the id of the model in session as key and the type of operation as value.
+     * @param mixed $type Event types of history to the AR object, as declared in the manager
      * @return void
      */
-   protected function storeInSession()
+   protected function storeInSession($type)
    {
        $modelSession = $this->getSession();
-       $modelSession[$this->owner->formName()][] = $this->owner->getPrimaryKey();
+       $modelSession[$this->owner->formName()][$this->owner->getPrimaryKey()] = $type;
        Yii::$app->session->set($this->sessionKey, $modelSession);
    }
 
@@ -264,6 +265,25 @@ class ActiveRecordHistoryBehavior extends Behavior
        if(!$this->saveUpdatesInSession) {
            return null;
        }
-       return in_array($this->owner->getPrimaryKey(), $this->getModelSession());
+
+       $manager = new $this->manager;
+       $sessionVal = ArrayHelper::getValue($this->getModelSession(), $this->owner->getPrimaryKey());
+       return in_array($sessionVal, [$manager::AR_UPDATE, $manager::AR_UPDATE_PK]);
    }
+
+    /**
+     * @return bool|null If the model has been inserted or modified in the current session. If saving in session is
+     * disabled it will return `null`.
+     * @throws \Exception
+     */
+    public function getHasBeenInserted()
+    {
+        if(!$this->saveUpdatesInSession) {
+            return null;
+        }
+
+        $manager = new $this->manager;
+        $type = $manager::AR_INSERT;
+        return ArrayHelper::getValue($this->getModelSession(), $this->owner->getPrimaryKey()) == $type;
+    }
 }
