@@ -8,6 +8,7 @@ namespace nhkey\arh\managers;
 
 use Yii;
 use yii\base\ErrorException;
+use yii\db\ActiveRecord;
 use yii\db\Expression;
 use yii\helpers\Json;
 
@@ -137,6 +138,42 @@ abstract class BaseManager implements ActiveRecordHistoryInterface
     }
 
     /**
+     * Searches for the value of the attribute at the specified date-time for the active record.
+     * In case the record was inserted after the given date it'll always return `null`.
+     * @param ActiveRecord $object The active record for which to search
+     * @param string $attribute The attribute to be searched
+     * @param string $date The date-time at which the value is to be obtained
+     * @return mixed The result of the search.
+     * @throws ErrorException
+     */
+    public function getRecordValueAt($object, $attribute, $date)
+    {
+        // We assume that for future dates the value will stay the same since we have no way to know it
+        if($date >= date('Y-m-d H:i:s')) {
+            return $object->getAttribute($attribute);
+        }
+        // Getting all history records for the attribute
+        $values = $this->getAllData($object);
+        foreach ($values as $value) {
+            // In case it's an "insert" record, it'll return null if it was created after the given date.
+            if($value['type'] == static::AR_INSERT) {
+                return $value['date'] <= $date ? $object->getAttribute($attribute) : null;
+            }
+            // Ignoring other fields
+            if($value['field_name'] != $attribute) {
+                continue;
+            }
+            // The history record is older than the given date it means its `new_value` was the current at that time
+            // since the data is ordered by descendent ID
+            if($value['date'] <= $date) {
+                return $value['new_value'];
+            }
+        }
+        // If we arrive here it means that there is not saved history for the record, we return the current value
+        return $object->getAttribute($attribute);
+    }
+
+    /**
      *
      * @param $model
      * @param $fieldsConfig format configuration according to 
@@ -193,5 +230,4 @@ abstract class BaseManager implements ActiveRecordHistoryInterface
         }
         return Json::encode($value);
     }
-
 }

@@ -45,14 +45,19 @@ If you don't want to save some fields, you can use property ignoreFields (exampl
         }
 ```
 
-If you want to optain the log record corresponding to the last change of a model attribute just call on the model the function `lastChanged(ATTRIBUTE_NAME)`:
+If you want to optain the log record corresponding to the last change of a model attribute just call on the model the method `lastChanged(ATTRIBUTE_NAME)`:
 ```php
     $model->lastChanged("name");
 ```
 
-If you want to optain the log records corresponding to all the changes of a model just call on the model the function `changes()`:
+If you want to optain the log records corresponding to all the changes of a model just call on the model the method `changes()`:
 ```php
     $model->changes();
+```
+
+If you need to retrieve the value of an attribute at a specific date-time, use the `valueWas()` method:
+```php
+    $model->valueWas('<attribute>', '<date formatted as Y-m-d H:i:s>');
 ```
 
 ## Properties

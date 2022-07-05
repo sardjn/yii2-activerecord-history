@@ -6,6 +6,7 @@
 
 namespace nhkey\arh\managers;
 
+use yii\db\Expression;
 use const SORT_DESC;
 use Yii;
 use yii\db\ActiveQuery;
@@ -50,6 +51,43 @@ class DBManager extends BaseManager
     }
 
     /**
+     * @inheritdoc
+     */
+    public function getRecordValueAt($object, $attribute, $date)
+    {
+        // We assume that for future dates the value will stay the same since we have no way to know it
+        if($date >= date('Y-m-d H:i:s')) {
+            return $object->getAttribute($attribute);
+        }
+        $query = $this->prepareBaseQuery();
+        // Getting the date-time in which the record was created
+        $insertDate = (clone $query)
+            ->select('date')
+            ->andWhere([
+                'table' => $object->tableName(),
+                'field_id' => new Expression("'{$object->getPrimaryKey()}'"),
+                'type' => static::AR_INSERT,
+            ])
+            ->scalar();
+        // The record was inserted after the specified date, we return `null`
+        if($insertDate > $date) {
+            return null;
+        }
+        // Searching for the first history record for the attribute and active record with date prior to the given one.
+        // We order by descendent ID so that it will be returned the most recent.
+        $query->select('new_value')
+            ->andWhere([
+                'table' => $object->tableName(),
+                'field_id' => new Expression("'{$object->getPrimaryKey()}'"),
+                'field_name' => $attribute,
+            ])
+            ->andWhere(['<=', 'date', $date])
+            ->orderBy(['id' => SORT_DESC]);
+        // If no record was found, it means that the value was never changed, in that case we return the current one.
+        return $query->scalar() ?: $object->getAttribute($attribute);
+    }
+
+    /**
      * Query for data record according to parameters
      * @param array $filter
      * @param array $order
@@ -76,6 +114,14 @@ class DBManager extends BaseManager
     }
 
     /**
+     * @return Query
+     */
+    private function prepareBaseQuery()
+    {
+        return (new Query())->from($this->tableName);
+    }
+
+    /**
      * @param array $filter
      * @param array $order
      * @return \yii\db\Command
@@ -83,8 +129,8 @@ class DBManager extends BaseManager
      */
     private function prepareQuery(array $filter, array $order)
     {
-        $query = new Query();
-        $query->select('*')->from($this->tableName)->andWhere($filter)->orderBy($order);
+        $query = $this->prepareBaseQuery();
+        $query->select('*')->andWhere($filter)->orderBy($order);
         return $query->createCommand(self::getDB());
     }
 

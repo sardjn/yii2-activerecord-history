@@ -8,11 +8,15 @@ namespace nhkey\arh;
 
 use nhkey\arh\managers\BaseManager;
 use Yii;
+use yii\base\InvalidArgumentException;
+use yii\db\ActiveRecord;
 use yii\db\BaseActiveRecord;
 use \yii\base\Behavior;
 use yii\helpers\ArrayHelper;
 
-
+/**
+ * @property ActiveRecord $owner
+ */
 class ActiveRecordHistoryBehavior extends Behavior
 {
 
@@ -285,5 +289,21 @@ class ActiveRecordHistoryBehavior extends Behavior
         $manager = new $this->manager;
         $type = $manager::AR_INSERT;
         return ArrayHelper::getValue($this->getModelSession(), $this->owner->getPrimaryKey()) == $type;
+    }
+
+    /**
+     * @param $attribute
+     * @param $date string
+     * @return string|null
+     * @throws \yii\base\ErrorException
+     */
+    public function valueWas($attribute, $date)
+    {
+        if(!\DateTime::createFromFormat('Y-m-d H:i:s', $date)) {
+            throw new InvalidArgumentException('The date must be passed with format "Y-m-d H:i:s"');
+        }
+        /** @var BaseManager $manager */
+        $manager = new $this->manager;
+        return $manager->getRecordValueAt($this->owner, $attribute, $date);
     }
 }
