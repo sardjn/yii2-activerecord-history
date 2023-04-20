@@ -60,9 +60,13 @@ abstract class BaseManager implements ActiveRecordHistoryInterface
         $pk = $object->primaryKey();
         $pk = $pk[0];
 
+        $pkValue = $object->getPrimaryKey();
+        if(is_array($pkValue)) {
+            $pkValue = Json::encode($pkValue);
+        }
         $data = [
             'table' => $object->tableName(),
-            'field_id' => $object->getPrimaryKey(),
+            'field_id' => $pkValue,
             'type' => $type,
             'date' => date('Y-m-d H:i:s', time()),
             'action' => Yii::$app->requestedRoute,

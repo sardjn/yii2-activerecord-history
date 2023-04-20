@@ -1,6 +1,11 @@
 Yii2-ActiveRecord-History Extension for Yii 2 ChangeLog
 ==============================================
 
+1.2.2 Apr 20, 2023
+-------------------------
+
+- Fixed store of primary key when it consists of multiple columns
+
 1.2.1 Jul 05, 2022
 -------------------------
 
