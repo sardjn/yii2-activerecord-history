@@ -146,6 +146,12 @@ class ActiveRecordHistoryBehavior extends Behavior
 
             case BaseActiveRecord::EVENT_AFTER_DELETE:
                 $type = $manager::AR_DELETE;
+                $changedAttributes = $this->owner->attributes;
+                foreach ($this->ignoreFields as $ignoreField) {
+                    if (array_key_exists($ignoreField, $changedAttributes))
+                        unset($changedAttributes[$ignoreField]);
+                }
+                $manager->setUpdatedFields($changedAttributes);
                 break;
 
             default:

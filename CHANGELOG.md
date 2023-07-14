@@ -1,6 +1,11 @@
 Yii2-ActiveRecord-History Extension for Yii 2 ChangeLog
 ==============================================
 
+1.2.3 Jul 07, 2023
+-------------------------
+
+- _Added possibility to save all model's data on delete_.
+
 1.2.2 Apr 20, 2023
 -------------------------
 

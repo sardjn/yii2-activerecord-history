@@ -32,6 +32,11 @@ abstract class BaseManager implements ActiveRecordHistoryInterface
     public $saveAllFieldsOnInsert = false;
 
     /**
+     * @var boolean Flag for save the value of all the fields when new record is insert
+     */
+    public $saveAllFieldsOnDelete = true;
+
+    /**
      * @inheritdoc
      */
     public function setOptions($options)
@@ -77,13 +82,12 @@ abstract class BaseManager implements ActiveRecordHistoryInterface
 
         switch ($type) {
             case self::AR_INSERT:
-                if ($this->saveAllFieldsOnInsert) {
-
-                } else {
+                if (!$this->saveAllFieldsOnInsert) {
                     $data['field_name'] = $pk;
                     $this->saveField($data);
                     break;
                 }
+                // Save all fields was requested, we don't break so that enters in the next case.
             case self::AR_UPDATE:
                 foreach ($this->updatedFields as $updatedFieldKey => $updatedFieldValue) {
                     $data['field_name'] = $updatedFieldKey;
@@ -95,8 +99,17 @@ abstract class BaseManager implements ActiveRecordHistoryInterface
                 }
                 break;
             case self::AR_DELETE:
-                $data['field_name'] = $pk;
-                $this->saveField($data);
+                if ($this->saveAllFieldsOnDelete) {
+                    foreach ($this->updatedFields as $updatedFieldKey => $updatedFieldValue) {
+                        $data['field_name'] = $updatedFieldKey;
+                        $data['old_value'] = $this->encodeValue($updatedFieldValue);
+                        $data['new_value'] = null;
+                        $this->saveField($data);
+                    }
+                } else {
+                    $data['field_name'] = $pk;
+                    $this->saveField($data);
+                }
                 break;
             case self::AR_UPDATE_PK:
                 $data['field_name'] = $pk;
