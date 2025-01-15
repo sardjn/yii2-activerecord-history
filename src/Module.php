@@ -11,7 +11,6 @@ namespace nhkey\arh;
 use nhkey\arh\widgets\ModelChangesButton;
 use yii\base\Module AS BaseModule;
 
-
 class Module extends BaseModule
 {
     public $controllerNamespace = 'nhkey\arh\controllers';
@@ -19,6 +18,21 @@ class Module extends BaseModule
     public $allowedPermissions = [];
 
     public $userClass;
+
+    /**
+     * This sets aliases for the classes
+     * 
+     * Example:
+     * 
+     * ```php
+     * [
+     *      'user' => app\models\User::class,
+     * ]
+     * ```
+     * 
+     * @var array
+     */
+    public $restClassMappings = [];
 
     /**
      * The columns to display in the model changes page displayed by @see ModelChangesButton widget, if empty defaults

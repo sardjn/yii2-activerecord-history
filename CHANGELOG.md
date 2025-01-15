@@ -1,6 +1,11 @@
 Yii2-ActiveRecord-History Extension for Yii 2 ChangeLog
 ==============================================
 
+1.2.4 Jan 14, 2025
+-------------------------
+
+- Added model-changes endpoint to retrieve changes through API
+
 1.2.3 Jul 07, 2023
 -------------------------
 
