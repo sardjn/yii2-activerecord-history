@@ -2,15 +2,15 @@
 
 namespace nhkey\arh\controllers\api\v1;
 
-use Yii;
-use yii\rest\Controller;
-use nhkey\arh\managers\BaseManager;
 use nhkey\arh\managers\ActiveRecordHistoryInterface;
-use yetopen\helpers\ArrayHelper;
-use yii\web\NotFoundHttpException;
-use yii\db\ActiveRecord;
+use nhkey\arh\managers\BaseManager;
 use nhkey\arh\Module;
+use yetopen\helpers\ArrayHelper;
+use Yii;
+use yii\db\ActiveRecord;
 use yii\filters\Cors;
+use yii\rest\Controller;
+use yii\web\NotFoundHttpException;
 
 class ActiveRecordHistoryController extends Controller 
 {
@@ -79,17 +79,46 @@ class ActiveRecordHistoryController extends Controller
                     }
                 },
             ],
-            'user_id' => [
-                'value' => function($model) use ($userClass) {
-                    return $userClass::findOne($model['user_id']);
-                },
-            ],
         ];
 
-        return array_map(function($change) use ($valuesFormatting, $fieldsConfig, $class) {
+        $changesWithJson = [];
+        foreach ($changes as $record) {
+            $oldJson = json_decode($record['old_value'], true);
+            $newJson = json_decode($record['new_value'], true);
+            if (json_last_error() !== JSON_ERROR_NONE || !is_array($newJson)) {
+                $changesWithJson[] = $record;
+                continue;
+            }
+            if (!is_array($oldJson)) {
+                $oldJson = [];
+            }
+            foreach ($newJson as $key => $newValue) {
+                $oldValue = $oldJson[$key] ?? null;
+                if ($oldValue != $newValue) {
+                    $datum = [
+                        "id" => $record['id'],
+                        "date" => $record['date'],
+                        "table" => $record['table'],
+                        "field_name" => $key,
+                        "field_id" => $record['field_id'],
+                        "old_value" => $oldValue ?: null,
+                        "new_value" => $newValue ?: null,
+                        "type" => $record['type'],
+                        "user_id" => $record['user_id'],
+                        "action" => $record['action'],
+                    ];
+                    $changesWithJson[] = $datum;
+                }
+            }
+        }
+
+        return array_map(function($change) use ($valuesFormatting, $fieldsConfig, $class, $userClass) {
             foreach ($change as $attribute => &$value) {
                 if ($attribute === "field_id") {
                     $change["description"] = (string)$class::findOne($change['field_id']);
+                }
+                if ($attribute === "user_id") {
+                    $change["user"] = (string)$userClass::findOne($change['user_id']);
                 }
                 if (!isset($valuesFormatting[$attribute])) {
                     continue;
@@ -109,7 +138,7 @@ class ActiveRecordHistoryController extends Controller
                 $change["model"] = $class;
             }
             return $change;
-        }, $changes);
+        }, $changesWithJson);
     }
 
     /**
