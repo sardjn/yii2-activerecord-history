@@ -113,14 +113,17 @@ class ActiveRecordHistoryController extends Controller
         }
 
         return array_map(function($change) use ($valuesFormatting, $fieldsConfig, $class, $userClass) {
-            foreach ($change as $attribute => &$value) {
+            // We have to use a dedicated variable to avoid overwriting the $change variable and losing the field_name
+            $formattedChange = [];
+            foreach ($change as $attribute => $value) {
                 if ($attribute === "field_id") {
-                    $change["description"] = (string)$class::findOne($change['field_id']);
+                    $formattedChange["description"] = (string)$class::findOne($change['field_id']);
                 }
                 if ($attribute === "user_id") {
-                    $change["user"] = (string)$userClass::findOne($change['user_id']);
+                    $formattedChange["user"] = (string)$userClass::findOne($change['user_id']);
                 }
                 if (!isset($valuesFormatting[$attribute])) {
+                    $formattedChange[$attribute] = $value;
                     continue;
                 }
                 $formatter = $valuesFormatting[$attribute];
@@ -130,14 +133,15 @@ class ActiveRecordHistoryController extends Controller
                 if (isset($formatter['format'])) {
                     $value = Yii::$app->formatter->format($value, $formatter['format']);
                 }
+                $formattedChange[$attribute] = $value;
             }
 
             if (isset($fieldsConfig['model'])) {
-                $change["model"] = $fieldsConfig['model'];
+                $formattedChange["model"] = $fieldsConfig['model'];
             } else {
-                $change["model"] = $class;
+                $formattedChange["model"] = $class;
             }
-            return $change;
+            return $formattedChange;
         }, $changesWithJson);
     }
 

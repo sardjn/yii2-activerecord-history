@@ -8,10 +8,10 @@ namespace nhkey\arh;
 
 use nhkey\arh\managers\BaseManager;
 use Yii;
+use yii\base\Behavior;
 use yii\base\InvalidArgumentException;
 use yii\db\ActiveRecord;
 use yii\db\BaseActiveRecord;
-use \yii\base\Behavior;
 use yii\helpers\ArrayHelper;
 
 /**
@@ -30,6 +30,11 @@ class ActiveRecordHistoryBehavior extends Behavior
      * @var array This fields not to be saved in the history.
      */
     public $ignoreFields = [];
+
+    /**
+     * @var array The fields will not be displayed.
+     */
+    public $hideFields = [];
 
     /**
      * @var array Events List than saved in storage
@@ -169,10 +174,16 @@ class ActiveRecordHistoryBehavior extends Behavior
      */
     public function lastChanged($attribute, $format = false)
     {
+        if (in_array($attribute, $this->hideFields, true)) {
+            return null;
+        }
         $manager = new $this->manager;
         $manager->setOptions($this->managerOptions);
 
         $field = $manager->getData($attribute, $this->owner);
+        if (!$field) {
+            return null;
+        }
         if ($format) {
             $field['old_value'] = BaseManager::applyFormat($field, $this->historyDisplayConfig, true);
             $field['new_value'] = BaseManager::applyFormat($field, $this->historyDisplayConfig);
@@ -192,6 +203,7 @@ class ActiveRecordHistoryBehavior extends Behavior
         $manager->setOptions($this->managerOptions);
 
         $fields = $manager->getAllData($this->owner);
+        $fields = $this->filterHiddenFields($fields);
         if ($format) {
             foreach ($fields AS $k => $field) {
                 $fields[$k]['old_value'] = BaseManager::applyFormat($field, $this->historyDisplayConfig, true);
@@ -200,7 +212,22 @@ class ActiveRecordHistoryBehavior extends Behavior
         }
         return $fields;
     }
-    
+
+    /**
+     * Remove hidden fields from a list of history records.
+     * @param array $fields
+     * @return array
+     */
+    protected function filterHiddenFields(array $fields): array
+    {
+        if (empty($this->hideFields)) {
+            return $fields;
+        }
+        return array_filter($fields, function ($field) {
+            return !in_array($field['field_name'], $this->hideFields, true);
+        });
+    }
+
     /**
     * Returns the dates in which an attribute is changed, if from_to is set it
     * reports only the related dates in which the attribute is hanged from
@@ -220,6 +247,9 @@ class ActiveRecordHistoryBehavior extends Behavior
        $fields = $manager->getAllData($this->owner);
        $dates = [];
        foreach ($fields AS $k => $field) {
+           if (in_array($field['field_name'], $this->hideFields, true)) {
+               continue;
+           }
            if ($field['field_name']===$attribute){
                $data = Yii::$app->formatter->asDate($field['date']);
                if ($format=="datetime"){
