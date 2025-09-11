@@ -5,6 +5,7 @@ Yii2-ActiveRecord-History Extension for Yii 2 ChangeLog
 -------------------------
 
 - Implemented hiding of fields during model changes fetch (e.g. via API)
+- Tracking referrer on model change log
 
 1.2.4 Jan 14, 2025
 -------------------------
