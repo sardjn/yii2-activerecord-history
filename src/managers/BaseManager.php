@@ -6,7 +6,6 @@
 
 namespace nhkey\arh\managers;
 
-use yetopen\helpers\ArrayHelper;
 use Yii;
 use yii\base\ErrorException;
 use yii\db\ActiveRecord;
@@ -70,8 +69,10 @@ abstract class BaseManager implements ActiveRecordHistoryInterface
         if(is_array($pkValue)) {
             $pkValue = Json::encode($pkValue);
         }
-        $referrer = ArrayHelper::getValue(Yii::$app->request, 'referrer', 'console');
-        $referrer = substr($referrer, 0, 255);
+        $referrer = null;
+        if (!Yii::$app->request->isConsoleRequest) {
+            $referrer = substr(Yii::$app->request->referrer, 0, 255);
+        }
         $data = [
             'table' => $object->tableName(),
             'field_id' => $pkValue,
